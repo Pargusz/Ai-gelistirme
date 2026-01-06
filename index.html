@@ -8,14 +8,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
 
     <style>
-        /* TASARIM GÜNCELLENDİ (SAFARI FIX) */
+        /* TASARIM (GROQ TURUNCUSU & SAFARI FIX) */
         :root { 
             --sidebar-bg: #0b0b0c; 
             --main-bg: #131314; 
             --input-container-bg: #1e1f20; 
             --input-bg: #2a2b2e; 
             --text-color: #E3E3E3; 
-            --accent-color: #00A67E; /* Qwen Yeşili */ 
+            --accent-color: #f55036; /* Groq Turuncusu */ 
             --code-bg: #1e1f20; 
             --code-header-bg: #2a2b2e; 
             --hover-item: #2A2B32; 
@@ -28,9 +28,8 @@
             color: var(--text-color); 
             margin: 0; 
             display: flex; 
-            /* SAFARI DÜZELTMESİ: 100dvh, tarayıcı çubuğunu hesaba katar */
-            height: 100vh; /* Eski tarayıcılar için */
-            height: 100dvh; /* Modern mobil tarayıcılar için dinamik yükseklik */
+            height: 100vh; 
+            height: 100dvh; 
             overflow: hidden; 
         }
 
@@ -88,9 +87,8 @@
             background-color: transparent; 
             position: relative; 
             z-index: 10;
-            /* SAFARI DÜZELTMESİ: iPhone alt çubuğu için güvenli alan boşluğu */
-            padding-bottom: env(safe-area-inset-bottom);
-            margin-bottom: 10px; 
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+            margin-bottom: 5px;
         }
 
         #image-preview-container { width: 100%; max-width: 850px; display: none; margin-bottom: 10px; }
@@ -111,7 +109,7 @@
         .plus-menu-item i { font-size: 16px; color: var(--accent-color); width: 20px; text-align: center; }
         #user-input { flex: 1; background: transparent; border: none; padding: 12px 5px; color: white; font-size: 16px; outline: none; min-height: 24px; }
         #send-btn { background-color: var(--accent-color); color: white; border: none; width: 40px; height: 40px; min-width: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; margin-left: 10px; flex-shrink: 0; }
-        #send-btn:hover { background-color: #007D5E; transform: scale(1.05); }
+        #send-btn:hover { background-color: #ff6e50; transform: scale(1.05); }
         #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 900; }
 
         @media (max-width: 768px) {
@@ -120,11 +118,9 @@
             #mobile-header { display: flex; }
             #chat-container { padding: 20px 15px; }
             .message-content { max-width: 90%; }
-            /* MOBİLDE EKSTRA GÜVENLİK BOŞLUĞU */
             #input-area { 
                 padding: 0 10px 10px 10px; 
-                /* Safari'nin alt çubuğundan kurtarmak için ekstra boşluk */
-                padding-bottom: max(10px, env(safe-area-inset-bottom));
+                padding-bottom: max(15px, env(safe-area-inset-bottom));
                 margin-bottom: 5px;
             }
             #overlay.active { display: block; }
@@ -139,7 +135,7 @@
     <div id="overlay" onclick="toggleSidebar()"></div>
 
     <div id="sidebar">
-        <div class="brand"><i class="fas fa-robot"></i> ParguszAi</div>
+        <div class="brand"><i class="fas fa-bolt"></i> ParguszAi</div>
         <button class="new-chat-btn" onclick="startNewChat()">
             <i class="fas fa-plus"></i> Yeni Sohbet
         </button>
@@ -153,7 +149,7 @@
                 <i class="fas fa-bars"></i>
             </button>
             <div class="mobile-brand">
-                <i class="fas fa-robot"></i> ParguszAi
+                <i class="fas fa-bolt"></i> ParguszAi
             </div>
             <div style="width: 24px;"></div>
         </div>
@@ -161,8 +157,8 @@
         <div id="chat-container">
             <div class="message-row bot" id="welcome-msg">
                 <div class="message-content">
-                    <div class="bot-label"><i class="fas fa-sparkles"></i> ParguszAi</div>
-                    <div>Merhaba! Ben <b>ParguszAi</b>. Türkçe konuşuyorum, görselleri analiz edebilirim ve kod yazabilirim!</div>
+                    <div class="bot-label"><i class="fas fa-bolt"></i> ParguszAi (Groq)</div>
+                    <div>Merhaba! Ben <b>ParguszAi</b>. Groq altyapısı ile ışık hızında çalışıyorum. Llama 3.3 modeliyle çok zekiyim! (Şu an görsel analiz servisi bakımda)</div>
                 </div>
             </div>
         </div>
@@ -204,20 +200,19 @@
 
     <script>
         // ==============================================================================
-        // API KEY GÜVENLİĞİ İÇİN PARÇALAMA YÖNTEMİ
+        // GROQ API KEY
         // ==============================================================================
-        const KEY_PART_1 = "sk-or-v1-"; 
-        // AŞAĞIDAKİ YENİ ANAHTAR (125... ile başlayan)
-        const KEY_PART_2 = "1258dc60dde5e5ae851062ad361fca24bc6c4748294edaf346751ce0f16d3be4".trim(); 
+        const KEY_PART_1 = "gsk_"; 
+        const KEY_PART_2 = "DUVvgzWvw5hEA7wfa1IlWGdyb3FYRb5BavximICTgtcDVzMyaxBl"; 
         
         const API_KEY = KEY_PART_1 + KEY_PART_2; 
         // ==============================================================================
 
-        // OpenRouter API URL
-        const API_URL = "https://openrouter.ai/api/v1/chat/completions";
+        // GROQ API URL
+        const API_URL = "https://api.groq.com/openai/v1/chat/completions";
         
-        // MODEL: Qwen-2-VL (7B). Google olmayan, ücretsiz, vision destekli.
-        const MODEL_NAME = "qwen/qwen-2-vl-7b-instruct:free"; 
+        // MODEL: Llama 3.3 70B (Çalışan, çok zeki, metin modeli)
+        const MODEL_NAME = "llama-3.3-70b-versatile"; 
 
         let allChats = []; 
         let currentChatId = null;
@@ -269,7 +264,7 @@
         function setGeneratingState(generating) { isGenerating = generating; if (generating) { sendBtn.innerHTML = '<i class="fas fa-stop"></i>'; } else { sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>'; } }
         function handleSendClick() { if (isGenerating) { if (abortController) { abortController.abort(); abortController = null; } setGeneratingState(false); const thinkingDiv = document.querySelector('.thinking-box'); if (thinkingDiv) thinkingDiv.closest('.message-row').remove(); } else { sendMessage(); } }
 
-        // --- OPENROUTER API FONKSİYONU ---
+        // --- GROQ API FONKSİYONU ---
         async function sendMessage() {
             const text = userInput.value.trim();
             if (!text && !currentImageData) return;
@@ -289,21 +284,8 @@
             let userContent = [];
             if (text) userContent.push({ type: "text", text: text });
             
-            // Görsel varsa ekle
-            if (currentImageData) {
-                userContent.push({ 
-                    type: "image_url", 
-                    image_url: { 
-                        url: currentImageData 
-                    } 
-                });
-                
-                const imageDiv = document.createElement('div');
-                imageDiv.className = 'message-row user';
-                imageDiv.innerHTML = `<div class="message-content" style="padding: 5px;"><img src="${currentImageData}" style="max-height: 300px; border-radius: 10px; display:block;"></div>`;
-                chatContainer.appendChild(imageDiv);
-                activeChat.messages.push({ role: "user", type: "image", content: currentImageData });
-            }
+            // Vision modelleri kapalı olduğu için görseli şu an eklemiyoruz
+            // if (currentImageData) { ... } kısmı pasif
 
             if (text) { 
                 addMessageToScreen(text, 'user'); 
@@ -317,7 +299,7 @@
             setGeneratingState(true);
             abortController = new AbortController(); 
 
-            // ÖZEL FİLTRE
+            // ÖZEL FİLTRE (Geri eklendi)
             const lowerText = text.toLowerCase();
             if (text && (lowerText.includes("apo") || lowerText.includes("öcalan") || lowerText.includes("ocalan"))) {
                 const thinkingDiv = showThinkingAnimation();
@@ -335,44 +317,37 @@
             const thinkingDiv = showThinkingAnimation();
 
             try {
-                // OpenRouter Payload
+                // Groq Payload
                 const payload = {
                     model: MODEL_NAME,
                     messages: [
-                        // SYSTEM PROMPT: KATI KURALLAR
                         {
                             role: "system",
                             content: `Senin adın ParguszAi. Seni "Pargusz" isimli bir yazılımcı geliştirdi.
                             
                             KESİN KURALLAR:
-                            1. SADECE TÜRKÇE KONUŞ: Cevapların her zaman akıcı ve düzgün bir Türkçe olmalı. Asla Çince, Korece veya gereksiz İngilizce açıklamalar yapma.
-                            2. KİMLİK: "Sen kimsin?" veya "Seni kim yaptı?" diye sorulursa şu cevabı ver: "Ben ParguszAi, beni Pargusz isimli bir yazılımcı yaptı, tamamen Türkçe üretildim ve size yardımcı olmaya çalışıyorum."
-                            3. KODLAMA: Kullanıcı kod isterse (Python, HTML, CSS, C++, Java vb.), kod bloğunu standart İngilizce sözdizimiyle yaz. Ancak kodun açıklamalarını ve yorumlarını TÜRKÇE yap.`
+                            1. SADECE TÜRKÇE KONUŞ: Cevapların her zaman akıcı ve düzgün bir Türkçe olmalı. Asla İngilizce cevap verme.
+                            2. KİMLİK: "Sen kimsin?" sorusuna "Ben ParguszAi, beni Pargusz isimli bir yazılımcı yaptı" de.
+                            3. KODLAMA: Kodları evrensel formatta (İngilizce syntax) yaz ama açıklamaları Türkçe yap.`
                         },
                         {
                             role: "user",
-                            content: userContent
+                            content: text // Sadece metin
                         }
                     ],
-                    temperature: 0.6, 
-                    "route": "fallback" 
+                    temperature: 0.6,
+                    max_tokens: 1024
                 };
 
                 const response = await fetch(API_URL, {
                     method: "POST",
                     headers: { 
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${API_KEY}`,
-                        "HTTP-Referer": "https://pargusz-ai.local", 
-                        "X-Title": "ParguszAi"
+                        "Authorization": `Bearer ${API_KEY}`
                     },
                     body: JSON.stringify(payload),
                     signal: abortController.signal
                 });
-
-                if (response.status === 429) {
-                    throw new Error("Sunucu şu an çok yoğun. Lütfen 1 dakika bekleyip tekrar dene.");
-                }
 
                 if (!response.ok) {
                     const errData = await response.json();
@@ -428,7 +403,7 @@
         function togglePin(e, chatId) { e.stopPropagation(); const chat = allChats.find(c => c.id === chatId); if(chat) { chat.pinned = !chat.pinned; updateSidebar(); saveChatsToLocal(); } }
         function renameChat(e, chatId) { e.stopPropagation(); const chat = allChats.find(c => c.id === chatId); const newTitle = prompt("Yeni isim:", chat.title); if(newTitle && newTitle.trim() !== "") { chat.title = newTitle.trim(); updateSidebar(); saveChatsToLocal(); } }
         function shareChat(e, chatId) { e.stopPropagation(); const chat = allChats.find(c => c.id === chatId); let textToCopy = `--- ${chat.title} ---\n\n`; chat.messages.forEach(msg => { if(msg.type === 'text') textToCopy += `${msg.role}: ${msg.content}\n\n`; }); navigator.clipboard.writeText(textToCopy).then(() => alert("Sohbet kopyalandı!")); closeAllMenus(); }
-        function startNewChat() { currentChatId = null; chatContainer.innerHTML = `<div class="message-row bot" id="welcome-msg"><div class="message-content"><div class="bot-label"><i class="fas fa-sparkles"></i> ParguszAi</div><div>Merhaba! Ben <b>ParguszAi</b>. Türkçe konuşuyorum ve görselleri analiz edebilirim. Bana bir fotoğraf yükle!</div></div></div>`; updateSidebar(); removeImage(); if(window.innerWidth <= 768) { sidebar.classList.remove('open'); overlay.classList.remove('active'); } }
+        function startNewChat() { currentChatId = null; chatContainer.innerHTML = `<div class="message-row bot" id="welcome-msg"><div class="message-content"><div class="bot-label"><i class="fas fa-bolt"></i> ParguszAi</div><div>Merhaba! Ben <b>ParguszAi</b>. Groq altyapısı ile ışık hızında çalışıyorum. Llama 3.3 modeliyle çok zekiyim! (Şu an görsel analiz servisi bakımda)</div></div></div>`; updateSidebar(); removeImage(); if(window.innerWidth <= 768) { sidebar.classList.remove('open'); overlay.classList.remove('active'); } }
         function loadChat(id) { const chatToLoad = allChats.find(c => c.id === id); if (!chatToLoad) return; currentChatId = id; chatContainer.innerHTML = ""; chatToLoad.messages.forEach(msg => { if (msg.role === 'user') { if (msg.type === 'image') { const imageDiv = document.createElement('div'); imageDiv.className = 'message-row user'; imageDiv.innerHTML = `<div class="message-content" style="padding: 5px;"><img src="${msg.content}" style="max-height: 300px; border-radius: 10px; display:block;"></div>`; chatContainer.appendChild(imageDiv); } else { addMessageToScreen(msg.content, 'user'); } } else { addMessageToScreen(msg.content, 'bot-fast'); } }); updateSidebar(); removeImage(); }
         
         function addMessageToScreen(text, type) { 
@@ -447,7 +422,7 @@
                 if(isBot) { 
                     const label = document.createElement('div'); 
                     label.className = 'bot-label'; 
-                    label.innerHTML = '<i class="fas fa-sparkles"></i> ParguszAi'; 
+                    label.innerHTML = '<i class="fas fa-bolt"></i> ParguszAi'; 
                     contentDiv.appendChild(label); 
                 } 
                 const body = document.createElement('div'); 
@@ -460,7 +435,7 @@
         }
 
         function showThinkingAnimation() { const rowDiv = document.createElement('div'); rowDiv.className = 'message-row bot'; const contentDiv = document.createElement('div'); contentDiv.className = 'message-content'; contentDiv.innerHTML = `<div class="thinking-box"><i class="fas fa-circle-notch thinking-icon"></i><span>ParguszAi düşünüyor...</span></div>`; rowDiv.appendChild(contentDiv); chatContainer.appendChild(rowDiv); chatContainer.scrollTop = chatContainer.scrollHeight; return rowDiv; }
-        function typeWriterEffect(fullText) { return new Promise((resolve) => { const rowDiv = document.createElement('div'); rowDiv.className = 'message-row bot'; const contentDiv = document.createElement('div'); contentDiv.className = 'message-content typing-cursor'; const label = document.createElement('div'); label.className = 'bot-label'; label.innerHTML = '<i class="fas fa-sparkles"></i> ParguszAi'; contentDiv.appendChild(label); const markdownBody = document.createElement('div'); contentDiv.appendChild(markdownBody); rowDiv.appendChild(contentDiv); chatContainer.appendChild(rowDiv); let i = 0; let currentText = ""; const speed = 1; function type() { if (!isGenerating) { contentDiv.classList.remove('typing-cursor'); markdownBody.innerHTML = marked.parse(currentText); resolve(); return; } if (i < fullText.length) { currentText += fullText.substring(i, i+5); i += 5; markdownBody.innerHTML = marked.parse(currentText); chatContainer.scrollTop = chatContainer.scrollHeight; setTimeout(type, speed); } else { contentDiv.classList.remove('typing-cursor'); markdownBody.innerHTML = marked.parse(fullText); resolve(); } } type(); }); }
+        function typeWriterEffect(fullText) { return new Promise((resolve) => { const rowDiv = document.createElement('div'); rowDiv.className = 'message-row bot'; const contentDiv = document.createElement('div'); contentDiv.className = 'message-content typing-cursor'; const label = document.createElement('div'); label.className = 'bot-label'; label.innerHTML = '<i class="fas fa-bolt"></i> ParguszAi'; contentDiv.appendChild(label); const markdownBody = document.createElement('div'); contentDiv.appendChild(markdownBody); rowDiv.appendChild(contentDiv); chatContainer.appendChild(rowDiv); let i = 0; let currentText = ""; const speed = 1; function type() { if (!isGenerating) { contentDiv.classList.remove('typing-cursor'); markdownBody.innerHTML = marked.parse(currentText); resolve(); return; } if (i < fullText.length) { currentText += fullText.substring(i, i+5); i += 5; markdownBody.innerHTML = marked.parse(currentText); chatContainer.scrollTop = chatContainer.scrollHeight; setTimeout(type, speed); } else { contentDiv.classList.remove('typing-cursor'); markdownBody.innerHTML = marked.parse(fullText); resolve(); } } type(); }); }
         function copyCode(button) { const wrapper = button.closest('.code-block-wrapper'); const rawCode = wrapper.querySelector('.raw-code').value; navigator.clipboard.writeText(rawCode).then(() => { const originalHTML = button.innerHTML; button.innerHTML = '<i class="fas fa-check"></i> Kopyalandı'; button.style.color = '#4caf50'; setTimeout(() => { button.innerHTML = originalHTML; button.style.color = ''; }, 2000); }); }
     </script>
 </body>
