@@ -1,0 +1,27 @@
+mutation CreateUser($displayName: String!, $email: String, $photoUrl: String) @auth(level: USER) {
+  user_insert(data: {displayName: $displayName, email: $email, photoUrl: $photoUrl, id_expr: "uuidV4()", createdAt_expr: "request.time"})
+}
+
+query GetUser @auth(level: USER) {
+  user(key: {id_expr: "auth.uid"}) {
+    id
+    displayName
+    email
+    photoUrl
+    createdAt
+  }
+}
+
+mutation CreateCollection($name: String!, $description: String) @auth(level: USER) {
+  collection_insert(data: {name: $name, description: $description, userId_expr: "auth.uid", createdAt_expr: "request.time", updatedAt_expr: "request.time"})
+}
+
+query ListCollections @auth(level: USER) {
+  collections(where: {userId: {eq_expr: "auth.uid"}}) {
+    id
+    name
+    description
+    createdAt
+    updatedAt
+  }
+}

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ParguszAi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+
+    <style>
+        /* TASARIM AYNEN KORUNDU */
+        :root { --sidebar-bg: #0b0b0c; --main-bg: #131314; --input-container-bg: #1e1f20; --input-bg: #2a2b2e; --text-color: #E3E3E3; --accent-color: #00A67E; /* Qwen Yeşili */ --code-bg: #1e1f20; --code-header-bg: #2a2b2e; --hover-item: #2A2B32; --menu-bg: #2a2b2e; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--main-bg); color: var(--text-color); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        #sidebar { width: 260px; background-color: var(--sidebar-bg); padding: 20px; display: flex; flex-direction: column; border-right: 1px solid #333; flex-shrink: 0; transition: transform 0.3s ease; z-index: 1000; }
+        .brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: bold; margin-bottom: 20px; color: white; }
+        .brand i { color: var(--accent-color); font-size: 24px; }
+        .new-chat-btn { background-color: var(--input-container-bg); color: #e3e3e3; border: 1px solid #333; padding: 12px; border-radius: 20px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 10px; font-size: 14px; transition: all 0.2s; width: 100%; margin-bottom: 20px; }
+        .new-chat-btn:hover { background-color: #2a2b32; }
+        .history-title { font-size: 12px; color: #888; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; }
+        #history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-bottom: 20px; }
+        .history-item { padding: 10px 12px; border-radius: 20px; cursor: pointer; font-size: 14px; color: #ccc; transition: background 0.2s; display: flex; align-items: center; justify-content: space-between; position: relative; }
+        .history-item:hover, .history-item.active { background-color: var(--input-container-bg); color: white; }
+        .chat-title-group { display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1; }
+        .chat-title-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pin-icon { font-size: 11px; color: var(--accent-color); display: none; }
+        .history-item.pinned .pin-icon { display: block; }
+        .more-options-btn { background: transparent; border: none; color: #ccc; cursor: pointer; padding: 2px 6px; border-radius: 4px; opacity: 0; transition: opacity 0.2s; font-size: 14px; }
+        .history-item:hover .more-options-btn, .history-item.menu-open .more-options-btn { opacity: 1; }
+        .more-options-btn:hover { background-color: #444; color: white; }
+        .context-menu { position: absolute; right: 10px; top: 35px; background-color: var(--menu-bg); border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); width: 180px; z-index: 1000; display: none; flex-direction: column; padding: 5px; }
+        .context-menu.show { display: flex; }
+        .menu-item { padding: 10px 12px; color: #e0e0e0; font-size: 13px; display: flex; align-items: center; gap: 10px; cursor: pointer; border-radius: 4px; transition: background 0.2s; }
+        .menu-item:hover { background-color: #444; }
+        .menu-item.delete { color: #ff6b6b; }
+        #main-content { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; }
+        #mobile-header { display: none; align-items: center; justify-content: space-between; padding: 15px 20px; background-color: var(--main-bg); border-bottom: 1px solid #333; z-index: 100; }
+        #mobile-menu-btn { background: transparent; border: none; color: white; font-size: 20px; cursor: pointer; }
+        .mobile-brand { font-weight: bold; font-size: 18px; color: white; display: flex; align-items: center; gap: 8px; }
+        .mobile-brand i { color: var(--accent-color); }
+        #chat-container { flex: 1; padding: 40px 15% 20px 15%; overflow-y: auto; display: flex; flex-direction: column; gap: 30px; scroll-behavior: smooth; }
+        .message-row { display: flex; width: 100%; }
+        .message-row.user { justify-content: flex-end; }
+        .message-row.bot { justify-content: flex-start; }
+        .message-content { max-width: 80%; padding: 0 10px; line-height: 1.7; font-size: 16px; position: relative; min-width: 50px; word-wrap: break-word;}
+        .message-row.user .message-content { background-color: #2a2b32; color: white; padding: 12px 20px; border-radius: 20px; border-bottom-right-radius: 4px; }
+        .message-row.bot .message-content { background-color: transparent; color: var(--text-color); width: 100%; }
+        .bot-label { font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #c4c7c5; display: flex; align-items: center; gap: 8px; }
+        .code-block-wrapper { margin: 15px 0; border-radius: 8px; overflow: hidden; border: 1px solid #333; background-color: var(--code-bg); max-width: 100%; }
+        .code-block-header { display: flex; justify-content: space-between; align-items: center; background-color: var(--code-header-bg); padding: 8px 15px; font-size: 12px; color: #b4b4b4; border-bottom: 1px solid #333; }
+        .copy-btn { background: transparent; border: none; color: #b4b4b4; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 12px; }
+        .copy-btn:hover { color: white; }
+        .message-content pre { margin: 0 !important; padding: 15px; overflow-x: auto; background-color: transparent !important; border: none !important; }
+        .message-content code { font-family: 'Consolas', monospace; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+        .thinking-box { background: #1e1f20; border: 1px solid #333; border-radius: 20px; padding: 12px 20px; font-size: 14px; color: #9aa0a6; display: flex; align-items: center; gap: 10px; width: fit-content; margin-bottom: 10px; }
+        .thinking-icon { color: var(--accent-color); animation: spin 2s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .typing-cursor::after { content: '▋'; display: inline-block; animation: blink 1s step-end infinite; color: var(--accent-color); margin-left: 2px; }
+        @keyframes blink { 50% { opacity: 0; } }
+        #input-area { padding: 0 20px 30px 20px; display: flex; flex-direction: column; align-items: center; background-color: transparent; position: relative; z-index: 10; }
+        #image-preview-container { width: 100%; max-width: 850px; display: none; margin-bottom: 10px; }
+        .image-preview-box { position: relative; display: inline-block; }
+        .image-preview-box img { height: 80px; border-radius: 10px; border: 2px solid #333; }
+        .remove-image-btn { position: absolute; top: -8px; right: -8px; background-color: #333; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .remove-image-btn:hover { background-color: #555; }
+        #input-box-container { width: 100%; max-width: 850px; background-color: var(--input-container-bg); border-radius: 35px; display: flex; align-items: center; padding: 8px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: border-color 0.3s; position: relative; }
+        #input-box-container:focus-within { border-color: #555; background-color: #252627; }
+        #plus-btn { background-color: #333; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-right: 10px; transition: all 0.2s; font-size: 18px; flex-shrink: 0; }
+        #plus-btn:hover { background-color: #444; }
+        #plus-btn.active { transform: rotate(45deg); }
+        #plus-menu { position: absolute; bottom: 100%; left: 0; margin-bottom: 15px; background-color: var(--menu-bg); border: 1px solid #444; border-radius: 12px; padding: 8px; display: none; flex-direction: column; gap: 5px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 200px; z-index: 1001; }
+        #plus-menu.show { display: flex; animation: slideUp 0.2s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .plus-menu-item { padding: 10px; display: flex; align-items: center; gap: 12px; color: #e3e3e3; font-size: 14px; cursor: pointer; border-radius: 8px; transition: background 0.2s; }
+        .plus-menu-item:hover { background-color: #444; }
+        .plus-menu-item i { font-size: 16px; color: var(--accent-color); width: 20px; text-align: center; }
+        #user-input { flex: 1; background: transparent; border: none; padding: 12px 5px; color: white; font-size: 16px; outline: none; min-height: 24px; }
+        #send-btn { background-color: var(--accent-color); color: white; border: none; width: 40px; height: 40px; min-width: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; margin-left: 10px; flex-shrink: 0; }
+        #send-btn:hover { background-color: #007D5E; transform: scale(1.05); }
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 900; }
+
+        @media (max-width: 768px) {
+            #sidebar { position: fixed; left: -100%; top: 0; height: 100%; width: 280px; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
+            #sidebar.open { left: 0; }
+            #mobile-header { display: flex; }
+            #chat-container { padding: 20px 15px; }
+            .message-content { max-width: 90%; }
+            #input-area { padding: 0 10px 20px 10px; }
+            #overlay.active { display: block; }
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--main-bg); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div id="overlay" onclick="toggleSidebar()"></div>
+
+    <div id="sidebar">
+        <div class="brand"><i class="fas fa-robot"></i> ParguszAi</div>
+        <button class="new-chat-btn" onclick="startNewChat()">
+            <i class="fas fa-plus"></i> Yeni Sohbet
+        </button>
+        <div class="history-title">GEÇMİŞ SOHBETLER</div>
+        <div id="history-list"></div>
+    </div>
+
+    <div id="main-content">
+        <div id="mobile-header">
+            <button id="mobile-menu-btn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="mobile-brand">
+                <i class="fas fa-robot"></i> ParguszAi
+            </div>
+            <div style="width: 24px;"></div>
+        </div>
+
+        <div id="chat-container">
+            <div class="message-row bot" id="welcome-msg">
+                <div class="message-content">
+                    <div class="bot-label"><i class="fas fa-sparkles"></i> ParguszAi</div>
+                    <div>Merhaba! Ben <b>ParguszAi</b>. Türkçe konuşuyorum, görselleri analiz edebilirim ve kod yazabilirim!</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="input-area">
+            <div id="image-preview-container">
+                <div class="image-preview-box">
+                    <img id="image-preview" src="" alt="Yüklenen Görsel">
+                    <button class="remove-image-btn" onclick="removeImage()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="input-box-container">
+                <div style="position: relative;">
+                    <button id="plus-btn" onclick="togglePlusMenu(event)">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <div id="plus-menu">
+                        <div class="plus-menu-item" onclick="triggerFileUpload()">
+                            <i class="far fa-image"></i> Görsel Yükle
+                        </div>
+                        <div class="plus-menu-item" onclick="alert('Yakında...')">
+                            <i class="fas fa-magnifying-glass"></i> Ara
+                        </div>
+                    </div>
+                </div>
+                
+                <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
+                <input type="text" id="user-input" placeholder="ParguszAi'ya bir şey sor..." autocomplete="off">
+                <button id="send-btn" onclick="handleSendClick()"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+
+    <script>
+        // ==============================================================================
+        // SENİN VERDİĞİN API KEY
+        // ==============================================================================
+        const API_KEY = "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"; 
+        // ==============================================================================
+
+        // OpenRouter API URL
+        const API_URL = "https://openrouter.ai/api/v1/chat/completions";
+        
+        // MODEL: Qwen-2-VL (7B). Google olmayan, ücretsiz, vision destekli.
+        const MODEL_NAME = "qwen/qwen-2-vl-7b-instruct:free"; 
+
+        let allChats = []; 
+        let currentChatId = null;
+        let currentImageData = null; 
+        let isGenerating = false; 
+        let abortController = null; 
+
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const historyListEl = document.getElementById('history-list');
+        const plusMenu = document.getElementById('plus-menu');
+        const plusBtn = document.getElementById('plus-btn');
+        const fileInput = document.getElementById('file-input');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        function toggleSidebar() { sidebar.classList.toggle('open'); overlay.classList.toggle('active'); }
+        function loadChatsFromLocal() { const stored = localStorage.getItem('parguszAi_chats'); if(stored) { allChats = JSON.parse(stored); updateSidebar(); } }
+        function saveChatsToLocal() { localStorage.setItem('parguszAi_chats', JSON.stringify(allChats)); }
+        window.onload = function() { loadChatsFromLocal(); };
+
+        const renderer = { code(code, lang) { const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext'; let highlightedCode; try { highlightedCode = hljs.highlight(code, { language }).value; } catch (e) { highlightedCode = hljs.highlightAuto(code).value; } return `<div class="code-block-wrapper"><div class="code-block-header"><span style="font-weight:bold; text-transform:uppercase;">${language}</span><button class="copy-btn" onclick="copyCode(this)"><i class="far fa-copy"></i> Kopyala</button></div><pre><code class="hljs language-${language}">${highlightedCode}</code></pre><textarea style="display:none;" class="raw-code">${code}</textarea></div>`; } };
+        marked.use({ renderer });
+        marked.setOptions({ breaks: true });
+
+        userInput.addEventListener("keypress", (e) => { if (e.key === "Enter" && !isGenerating) handleSendClick(); });
+        document.addEventListener('click', (e) => { if (!e.target.closest('.history-item') && !e.target.closest('#mobile-menu-btn')) { } if (!e.target.closest('#plus-btn') && !e.target.closest('#plus-menu')) closePlusMenu(); });
+        function togglePlusMenu(e) { e.stopPropagation(); plusMenu.classList.toggle('show'); plusBtn.classList.toggle('active'); }
+        function closePlusMenu() { plusMenu.classList.remove('show'); plusBtn.classList.remove('active'); }
+        function triggerFileUpload() { closePlusMenu(); fileInput.click(); }
+        
+        function handleFileUpload(event) { 
+            const file = event.target.files[0]; 
+            if (!file) return; 
+            const reader = new FileReader(); 
+            reader.onload = function(e) { 
+                currentImageData = e.target.result; 
+                imagePreview.src = currentImageData; 
+                imagePreviewContainer.style.display = 'block'; 
+            }; 
+            reader.readAsDataURL(file); 
+            event.target.value = ''; 
+        }
+        
+        function removeImage() { currentImageData = null; imagePreview.src = ''; imagePreviewContainer.style.display = 'none'; }
+        function setGeneratingState(generating) { isGenerating = generating; if (generating) { sendBtn.innerHTML = '<i class="fas fa-stop"></i>'; } else { sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>'; } }
+        function handleSendClick() { if (isGenerating) { if (abortController) { abortController.abort(); abortController = null; } setGeneratingState(false); const thinkingDiv = document.querySelector('.thinking-box'); if (thinkingDiv) thinkingDiv.closest('.message-row').remove(); } else { sendMessage(); } }
+
+        // --- OPENROUTER API FONKSİYONU ---
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text && !currentImageData) return;
+
+            if (!currentChatId) {
+                currentChatId = Date.now();
+                let titleText = text || "Yeni Sohbet";
+                let title = titleText.length > 20 ? titleText.substring(0, 20) + "..." : titleText;
+                const newChat = { id: currentChatId, title: title, pinned: false, messages: [] };
+                allChats.unshift(newChat);
+                updateSidebar();
+                saveChatsToLocal();
+            }
+
+            const activeChat = allChats.find(c => c.id === currentChatId);
+
+            let userContent = [];
+            if (text) userContent.push({ type: "text", text: text });
+            
+            // Görsel varsa ekle
+            if (currentImageData) {
+                userContent.push({ 
+                    type: "image_url", 
+                    image_url: { 
+                        url: currentImageData 
+                    } 
+                });
+                
+                const imageDiv = document.createElement('div');
+                imageDiv.className = 'message-row user';
+                imageDiv.innerHTML = `<div class="message-content" style="padding: 5px;"><img src="${currentImageData}" style="max-height: 300px; border-radius: 10px; display:block;"></div>`;
+                chatContainer.appendChild(imageDiv);
+                activeChat.messages.push({ role: "user", type: "image", content: currentImageData });
+            }
+
+            if (text) { 
+                addMessageToScreen(text, 'user'); 
+                activeChat.messages.push({ role: "user", type: "text", content: text });
+            }
+            
+            saveChatsToLocal();
+            userInput.value = "";
+            removeImage();
+
+            setGeneratingState(true);
+            abortController = new AbortController(); 
+
+            // ÖZEL FİLTRE
+            const lowerText = text.toLowerCase();
+            if (text && (lowerText.includes("apo") || lowerText.includes("öcalan") || lowerText.includes("ocalan"))) {
+                const thinkingDiv = showThinkingAnimation();
+                setTimeout(async () => {
+                    thinkingDiv.remove();
+                    const specialReply = "orrrrrospu çocuğudurrr";
+                    activeChat.messages.push({ role: "assistant", type: "text", content: specialReply });
+                    saveChatsToLocal();
+                    await typeWriterEffect(specialReply);
+                    setGeneratingState(false);
+                }, 500);
+                return; 
+            }
+
+            const thinkingDiv = showThinkingAnimation();
+
+            try {
+                // OpenRouter Payload
+                const payload = {
+                    model: MODEL_NAME,
+                    messages: [
+                        // SYSTEM PROMPT: KATI KURALLAR
+                        {
+                            role: "system",
+                            content: `Senin adın ParguszAi. Seni "Pargusz" isimli bir yazılımcı geliştirdi.
+                            
+                            KESİN KURALLAR:
+                            1. SADECE TÜRKÇE KONUŞ: Cevapların her zaman akıcı ve düzgün bir Türkçe olmalı. Asla Çince, Korece veya gereksiz İngilizce açıklamalar yapma.
+                            2. KİMLİK: "Sen kimsin?" veya "Seni kim yaptı?" diye sorulursa şu cevabı ver: "Ben ParguszAi, beni Pargusz isimli bir yazılımcı yaptı, tamamen Türkçe üretildim ve size yardımcı olmaya çalışıyorum."
+                            3. KODLAMA: Kullanıcı kod isterse (Python, HTML, CSS, C++, Java vb.), kod bloğunu standart İngilizce sözdizimiyle yaz. Ancak kodun açıklamalarını ve yorumlarını TÜRKÇE yap.`
+                        },
+                        {
+                            role: "user",
+                            content: userContent
+                        }
+                    ],
+                    temperature: 0.6, // Saçmalamayı önlemek için sıcaklığı düşürdük
+                    "route": "fallback" 
+                };
+
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${API_KEY}`,
+                        "HTTP-Referer": window.location.href, 
+                        "X-Title": "ParguszAi"
+                    },
+                    body: JSON.stringify(payload),
+                    signal: abortController.signal
+                });
+
+                if (response.status === 429) {
+                    throw new Error("Sunucu şu an çok yoğun. Lütfen 1 dakika bekleyip tekrar dene.");
+                }
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error?.message || "API Hatası: " + response.status);
+                }
+
+                const data = await response.json();
+                const botReply = data.choices[0].message.content;
+
+                thinkingDiv.remove();
+                activeChat.messages.push({ role: "assistant", type: "text", content: botReply });
+                saveChatsToLocal();
+                await typeWriterEffect(botReply);
+
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    if(thinkingDiv) thinkingDiv.remove();
+                } else {
+                    if(thinkingDiv) thinkingDiv.remove();
+                    addMessageToScreen("⚠️ " + error.message, 'error');
+                }
+            } finally {
+                setGeneratingState(false);
+                userInput.focus();
+                abortController = null;
+            }
+        }
+
+        // --- DİĞER FONKSİYONLAR ---
+        function updateSidebar() {
+            historyListEl.innerHTML = "";
+            allChats.sort((a, b) => {
+                if (a.pinned === b.pinned) return b.id - a.id;
+                return a.pinned ? -1 : 1;
+            });
+            allChats.forEach(chat => {
+                const div = document.createElement('div');
+                div.className = `history-item ${chat.id === currentChatId ? 'active' : ''} ${chat.pinned ? 'pinned' : ''}`;
+                div.onclick = (e) => {
+                    if(!e.target.closest('.more-options-btn') && !e.target.closest('.context-menu')) {
+                        loadChat(chat.id);
+                        if(window.innerWidth <= 768) toggleSidebar();
+                    }
+                };
+                div.innerHTML = `<div class="chat-title-group"><i class="fas fa-thumbtack pin-icon"></i><i class="far fa-message" style="font-size:12px; opacity:0.7;"></i> <span class="chat-title-text">${chat.title}</span></div><button class="more-options-btn" onclick="toggleMenu(event, ${chat.id})"><i class="fas fa-ellipsis-vertical"></i></button><div class="context-menu" id="menu-${chat.id}"><div class="menu-item" onclick="shareChat(event, ${chat.id})"><i class="fas fa-share-nodes"></i> Sohbeti Paylaş</div><div class="menu-item" onclick="renameChat(event, ${chat.id})"><i class="fas fa-pen"></i> Yeniden Adlandır</div><div class="menu-item" onclick="togglePin(event, ${chat.id})"><i class="fas fa-thumbtack"></i> ${chat.pinned ? 'Sabitlemeyi Kaldır' : 'Sabitle'}</div><div class="menu-item delete" onclick="deleteChat(event, ${chat.id})"><i class="fas fa-trash"></i> Sil</div></div>`;
+                historyListEl.appendChild(div);
+            });
+        }
+
+        function toggleMenu(e, chatId) { e.stopPropagation(); closeAllMenus(); const menu = document.getElementById(`menu-${chatId}`); if(menu) { menu.classList.add('show'); menu.closest('.history-item').classList.add('menu-open'); } }
+        function closeAllMenus() { document.querySelectorAll('.context-menu').forEach(el => el.classList.remove('show')); document.querySelectorAll('.history-item').forEach(el => el.classList.remove('menu-open')); }
+        function deleteChat(e, chatId) { e.stopPropagation(); if(!confirm("Silmek istediğine emin misin?")) return; allChats = allChats.filter(c => c.id !== chatId); saveChatsToLocal(); if (currentChatId === chatId) startNewChat(); else updateSidebar(); }
+        function togglePin(e, chatId) { e.stopPropagation(); const chat = allChats.find(c => c.id === chatId); if(chat) { chat.pinned = !chat.pinned; updateSidebar(); saveChatsToLocal(); } }
+        function renameChat(e, chatId) { e.stopPropagation(); const chat = allChats.find(c => c.id === chatId); const newTitle = prompt("Yeni isim:", chat.title); if(newTitle && newTitle.trim() !== "") { chat.title = newTitle.trim(); updateSidebar(); saveChatsToLocal(); } }
+        function shareChat(e, chatId) { e.stopPropagation(); const chat = allChats.find(c => c.id === chatId); let textToCopy = `--- ${chat.title} ---\n\n`; chat.messages.forEach(msg => { if(msg.type === 'text') textToCopy += `${msg.role}: ${msg.content}\n\n`; }); navigator.clipboard.writeText(textToCopy).then(() => alert("Sohbet kopyalandı!")); closeAllMenus(); }
+        function startNewChat() { currentChatId = null; chatContainer.innerHTML = `<div class="message-row bot" id="welcome-msg"><div class="message-content"><div class="bot-label"><i class="fas fa-sparkles"></i> ParguszAi</div><div>Merhaba! Ben <b>ParguszAi</b>. Türkçe konuşuyorum ve görselleri analiz edebilirim. Bana bir fotoğraf yükle!</div></div></div>`; updateSidebar(); removeImage(); if(window.innerWidth <= 768) { sidebar.classList.remove('open'); overlay.classList.remove('active'); } }
+        function loadChat(id) { const chatToLoad = allChats.find(c => c.id === id); if (!chatToLoad) return; currentChatId = id; chatContainer.innerHTML = ""; chatToLoad.messages.forEach(msg => { if (msg.role === 'user') { if (msg.type === 'image') { const imageDiv = document.createElement('div'); imageDiv.className = 'message-row user'; imageDiv.innerHTML = `<div class="message-content" style="padding: 5px;"><img src="${msg.content}" style="max-height: 300px; border-radius: 10px; display:block;"></div>`; chatContainer.appendChild(imageDiv); } else { addMessageToScreen(msg.content, 'user'); } } else { addMessageToScreen(msg.content, 'bot-fast'); } }); updateSidebar(); removeImage(); }
+        
+        function addMessageToScreen(text, type) { 
+            const rowDiv = document.createElement('div'); 
+            const isBot = type === 'bot' || type === 'bot-fast' || type === 'error'; 
+            rowDiv.className = `message-row ${isBot ? 'bot' : 'user'}`; 
+            const contentDiv = document.createElement('div'); 
+            contentDiv.className = 'message-content'; 
+            
+            if (type === 'error') { 
+                contentDiv.style.color = '#ff6b6b'; 
+                contentDiv.innerText = text; 
+            } else if (type === 'user') { 
+                contentDiv.innerText = text; 
+            } else { 
+                if(isBot) { 
+                    const label = document.createElement('div'); 
+                    label.className = 'bot-label'; 
+                    label.innerHTML = '<i class="fas fa-sparkles"></i> ParguszAi'; 
+                    contentDiv.appendChild(label); 
+                } 
+                const body = document.createElement('div'); 
+                body.innerHTML = marked.parse(text); 
+                contentDiv.appendChild(body); 
+            } 
+            rowDiv.appendChild(contentDiv); 
+            chatContainer.appendChild(rowDiv); 
+            chatContainer.scrollTop = chatContainer.scrollHeight; 
+        }
+
+        function showThinkingAnimation() { const rowDiv = document.createElement('div'); rowDiv.className = 'message-row bot'; const contentDiv = document.createElement('div'); contentDiv.className = 'message-content'; contentDiv.innerHTML = `<div class="thinking-box"><i class="fas fa-circle-notch thinking-icon"></i><span>ParguszAi düşünüyor...</span></div>`; rowDiv.appendChild(contentDiv); chatContainer.appendChild(rowDiv); chatContainer.scrollTop = chatContainer.scrollHeight; return rowDiv; }
+        function typeWriterEffect(fullText) { return new Promise((resolve) => { const rowDiv = document.createElement('div'); rowDiv.className = 'message-row bot'; const contentDiv = document.createElement('div'); contentDiv.className = 'message-content typing-cursor'; const label = document.createElement('div'); label.className = 'bot-label'; label.innerHTML = '<i class="fas fa-sparkles"></i> ParguszAi'; contentDiv.appendChild(label); const markdownBody = document.createElement('div'); contentDiv.appendChild(markdownBody); rowDiv.appendChild(contentDiv); chatContainer.appendChild(rowDiv); let i = 0; let currentText = ""; const speed = 1; function type() { if (!isGenerating) { contentDiv.classList.remove('typing-cursor'); markdownBody.innerHTML = marked.parse(currentText); resolve(); return; } if (i < fullText.length) { currentText += fullText.substring(i, i+5); i += 5; markdownBody.innerHTML = marked.parse(currentText); chatContainer.scrollTop = chatContainer.scrollHeight; setTimeout(type, speed); } else { contentDiv.classList.remove('typing-cursor'); markdownBody.innerHTML = marked.parse(fullText); resolve(); } } type(); }); }
+        function copyCode(button) { const wrapper = button.closest('.code-block-wrapper'); const rawCode = wrapper.querySelector('.raw-code').value; navigator.clipboard.writeText(rawCode).then(() => { const originalHTML = button.innerHTML; button.innerHTML = '<i class="fas fa-check"></i> Kopyalandı'; button.style.color = '#4caf50'; setTimeout(() => { button.innerHTML = originalHTML; button.style.color = ''; }, 2000); }); }
+    </script>
+</body>
+</html>

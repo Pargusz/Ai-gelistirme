@@ -1,0 +1,36 @@
+type User @table {
+  displayName: String!
+  createdAt: Timestamp!
+  email: String
+  photoUrl: String
+}
+
+type DieType @table {
+  user: User!
+  name: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  description: String
+}
+
+type DieFace @table {
+  dieType: DieType!
+  label: String!
+  faceNumber: Int!
+  imageUrl: String
+}
+
+type Collection @table {
+  user: User!
+  name: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  description: String
+}
+
+type CollectionDie @table(key: ["collection", "dieType"]) {
+  collection: Collection!
+  dieType: DieType!
+  createdAt: Timestamp!
+  orderInCollection: Int
+}

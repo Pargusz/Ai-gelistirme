@@ -1,0 +1,58 @@
+mutation CreateSeedData @transaction @auth(level: USER, insecureReason: "Seed data is safe to generate.") {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      displayName: "demouser1",
+      createdAt: "2024-04-29T12:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      displayName: "demouser2",
+      createdAt: "2024-04-29T13:00:00Z"
+    }
+  ])
+  dieType_insertMany(data: [
+    {
+      id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      name: "D6",
+      createdAt: "2024-04-29T14:00:00Z"
+    },
+    {
+      id: "f4e3d2c1-b6a5-0987-4321-fedcba0987654321",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      name: "D20",
+      createdAt: "2024-04-29T15:00:00Z"
+    }
+  ])
+  dieFace_insertMany(data: [
+    {
+      dieTypeId: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      faceNumber: 1,
+      label: "1",
+      id: "99bb1212-e988-4323-ab67-448899aabbcc"
+    },
+    {
+      dieTypeId: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      faceNumber: 2,
+      label: "2",
+      id: "99bb1212-e988-4323-ab67-448899aabbcca"
+    }
+  ])
+  collection_insertMany(data: [
+    {
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      name: "My First Collection",
+      createdAt: "2024-04-29T16:00:00Z",
+      updatedAt: "2024-04-29T16:00:00Z",
+      id: "11223344-5566-7788-9900-aabbccddeeff"
+    }
+  ])
+  collectionDie_insertMany(data: [
+    {
+      collectionId: "11223344-5566-7788-9900-aabbccddeeff",
+      dieTypeId: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      createdAt: "2024-04-29T17:00:00Z"
+    }
+  ])
+}
