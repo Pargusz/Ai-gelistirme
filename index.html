@@ -2,15 +2,38 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>ParguszAi</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
 
     <style>
-        /* TASARIM AYNEN KORUNDU */
-        :root { --sidebar-bg: #0b0b0c; --main-bg: #131314; --input-container-bg: #1e1f20; --input-bg: #2a2b2e; --text-color: #E3E3E3; --accent-color: #00A67E; /* Qwen Yeşili */ --code-bg: #1e1f20; --code-header-bg: #2a2b2e; --hover-item: #2A2B32; --menu-bg: #2a2b2e; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--main-bg); color: var(--text-color); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        /* TASARIM GÜNCELLENDİ (SAFARI FIX) */
+        :root { 
+            --sidebar-bg: #0b0b0c; 
+            --main-bg: #131314; 
+            --input-container-bg: #1e1f20; 
+            --input-bg: #2a2b2e; 
+            --text-color: #E3E3E3; 
+            --accent-color: #00A67E; /* Qwen Yeşili */ 
+            --code-bg: #1e1f20; 
+            --code-header-bg: #2a2b2e; 
+            --hover-item: #2A2B32; 
+            --menu-bg: #2a2b2e; 
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--main-bg); 
+            color: var(--text-color); 
+            margin: 0; 
+            display: flex; 
+            /* SAFARI DÜZELTMESİ: 100dvh, tarayıcı çubuğunu hesaba katar */
+            height: 100vh; /* Eski tarayıcılar için */
+            height: 100dvh; /* Modern mobil tarayıcılar için dinamik yükseklik */
+            overflow: hidden; 
+        }
+
         #sidebar { width: 260px; background-color: var(--sidebar-bg); padding: 20px; display: flex; flex-direction: column; border-right: 1px solid #333; flex-shrink: 0; transition: transform 0.3s ease; z-index: 1000; }
         .brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: bold; margin-bottom: 20px; color: white; }
         .brand i { color: var(--accent-color); font-size: 24px; }
@@ -56,7 +79,20 @@
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .typing-cursor::after { content: '▋'; display: inline-block; animation: blink 1s step-end infinite; color: var(--accent-color); margin-left: 2px; }
         @keyframes blink { 50% { opacity: 0; } }
-        #input-area { padding: 0 20px 30px 20px; display: flex; flex-direction: column; align-items: center; background-color: transparent; position: relative; z-index: 10; }
+        
+        #input-area { 
+            padding: 0 20px 20px 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background-color: transparent; 
+            position: relative; 
+            z-index: 10;
+            /* SAFARI DÜZELTMESİ: iPhone alt çubuğu için güvenli alan boşluğu */
+            padding-bottom: env(safe-area-inset-bottom);
+            margin-bottom: 10px; 
+        }
+
         #image-preview-container { width: 100%; max-width: 850px; display: none; margin-bottom: 10px; }
         .image-preview-box { position: relative; display: inline-block; }
         .image-preview-box img { height: 80px; border-radius: 10px; border: 2px solid #333; }
@@ -84,7 +120,13 @@
             #mobile-header { display: flex; }
             #chat-container { padding: 20px 15px; }
             .message-content { max-width: 90%; }
-            #input-area { padding: 0 10px 20px 10px; }
+            /* MOBİLDE EKSTRA GÜVENLİK BOŞLUĞU */
+            #input-area { 
+                padding: 0 10px 10px 10px; 
+                /* Safari'nin alt çubuğundan kurtarmak için ekstra boşluk */
+                padding-bottom: max(10px, env(safe-area-inset-bottom));
+                margin-bottom: 5px;
+            }
             #overlay.active { display: block; }
         }
         ::-webkit-scrollbar { width: 8px; }
@@ -165,8 +207,8 @@
         // API KEY GÜVENLİĞİ İÇİN PARÇALAMA YÖNTEMİ
         // ==============================================================================
         const KEY_PART_1 = "sk-or-v1-"; 
-        // İŞTE YENİ ANAHTARIN BURADA:
-        const KEY_PART_2 = "1258dc60dde5e5ae851062ad361fca24bc6c4748294edaf346751ce0f16d3be4"; 
+        // AŞAĞIDAKİ YENİ ANAHTAR (125... ile başlayan)
+        const KEY_PART_2 = "1258dc60dde5e5ae851062ad361fca24bc6c4748294edaf346751ce0f16d3be4".trim(); 
         
         const API_KEY = KEY_PART_1 + KEY_PART_2; 
         // ==============================================================================
@@ -312,7 +354,7 @@
                             content: userContent
                         }
                     ],
-                    temperature: 0.6, // Saçmalamayı önlemek için sıcaklığı düşürdük
+                    temperature: 0.6, 
                     "route": "fallback" 
                 };
 
@@ -321,7 +363,7 @@
                     headers: { 
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${API_KEY}`,
-                        "HTTP-Referer": window.location.href, 
+                        "HTTP-Referer": "https://pargusz-ai.local", 
                         "X-Title": "ParguszAi"
                     },
                     body: JSON.stringify(payload),
