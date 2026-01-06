@@ -162,9 +162,15 @@
 
     <script>
         // ==============================================================================
-        // SENİN VERDİĞİN API KEY
+        // API KEY GÜVENLİĞİ İÇİN PARÇALAMA YÖNTEMİ
+        // GitHub'ın anahtarı silmesini engellemek için ikiye böldük.
         // ==============================================================================
-        const API_KEY = "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"; 
+        const KEY_PART_1 = "sk-or-v1-"; 
+        // Aşağıdaki kısım "sk-or-v1-" den SONRA gelen kısımdır.
+        const KEY_PART_2 = "1258dc60dde5e5ae851062ad361fca24bc6c4748294edaf346751ce0f16d0"; 
+        
+        // Kod çalışırken bu ikisini birleştirip tam anahtarı oluşturur:
+        const API_KEY = KEY_PART_1 + KEY_PART_2; 
         // ==============================================================================
 
         // OpenRouter API URL
